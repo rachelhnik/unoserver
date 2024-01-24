@@ -1,4 +1,4 @@
-import { CustomError } from "./customError";
+import { CustomError } from "./CustomError";
 
 export default class BadRequestError extends CustomError {
   private static readonly _statusCode = 400;
