@@ -60,7 +60,7 @@ export const editUserData = async (
   }
   if (user?.userId !== userId) {
     const isExistingId = await findUserByUserId(userId);
-    console.log("is", isExistingId);
+
     if (isExistingId) {
       throw new BadRequestError({
         code: 400,
