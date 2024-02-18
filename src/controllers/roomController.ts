@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import Room from "../models/roomModel";
 import BadRequestError from "../errors/BadRequestError";
+import { findRoom } from "../services/roomService";
+import User from "../models/userModel";
 
 export const createRoom = async (
   req: Request,
@@ -12,7 +14,7 @@ export const createRoom = async (
 
     io.on("connection", (socket: any) => {
       socket.on("create", async (data: any) => {
-        const { name, password, userId } = req.body;
+        const { name, password, userId, username } = req.body;
         const alreadyExistingPassword = await Room.findOne({
           password: password,
         });
@@ -26,7 +28,8 @@ export const createRoom = async (
           name: name,
           socketId: socket.id,
           password: password,
-          playersIds: [userId],
+          ownerId: userId,
+          playersIds: [{ id: 1, playerId: userId, playerName: username }],
           status: "WAITING",
         });
         if (room) {
@@ -56,12 +59,19 @@ export const maintainRoomConnection = async (
   try {
     const io = req.app.get("socketio");
     io.on("connection", (socket: any) => {
-      socket.on("id", (id: any) => {
-        const targetSocket = io.sockets.sockets.get(id);
-        if (targetSocket) {
-          socket.emit("heelo");
+      socket.on(
+        "room-data",
+        async (data: { socketId: string; userId: string }) => {
+          const newUser = await User.findById({ _id: data.userId }).select({
+            name: true,
+          });
+          const targetSocket = io.sockets.sockets.get(data.socketId);
+          if (targetSocket) {
+            socket.emit("heelo");
+            socket.broadcast.emit("new-user", newUser?.name);
+          }
         }
-      });
+      );
     });
     res.sendStatus(200);
   } catch (error) {
@@ -75,13 +85,26 @@ export const enterRoom = async (
   next: NextFunction
 ) => {
   try {
-    const { password, userId } = req.body;
+    const { password, userId, username } = req.body;
+
     const room = await Room.find({ password });
     if (room) {
+      const newArr = [...room[0].playersIds].filter(
+        (data) => data.playerId !== userId
+      );
+      const updatedPlayersArr = [
+        ...newArr,
+        {
+          id: newArr.length + 1,
+          playerId: userId,
+          playerName: username,
+        },
+      ];
+
       const updatedRoom = await Room.findByIdAndUpdate(
         { _id: room[0]._id },
         {
-          playersIds: [...room[0].playersIds, userId],
+          playersIds: updatedPlayersArr,
         },
         { new: true }
       );
@@ -89,5 +112,19 @@ export const enterRoom = async (
     }
   } catch (error) {
     console.log("error", error);
+  }
+};
+
+export const getRoom = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    const room = await findRoom(id);
+    res.status(200).send(room);
+  } catch (error) {
+    next(error);
   }
 };

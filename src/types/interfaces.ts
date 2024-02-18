@@ -8,12 +8,19 @@ export interface IUser {
   userId: string;
 }
 
+interface PlayerData {
+  id: number;
+  playerId: String;
+  playerName: String;
+}
+
 export interface IRoom {
   _id: ObjectId;
   name: string;
   password: string;
   socketId: string;
-  playersIds: string[];
+  ownerId: string;
+  playersIds: PlayerData[];
   status: Status;
 }
 

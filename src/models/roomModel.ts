@@ -6,7 +6,10 @@ const roomSchema: Schema<IRoom> = new mongoose.Schema(
     name: { type: String, required: true },
     password: { type: String, required: true },
     socketId: { type: String },
-    playersIds: { type: [String] },
+    ownerId: { type: String },
+    playersIds: {
+      type: [{ id: Number, playerId: String, playerName: String }],
+    },
     status: {
       type: String,
       enum: Object.values(Status),

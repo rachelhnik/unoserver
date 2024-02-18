@@ -9,7 +9,6 @@ const ErrorHandler = async (
 ) => {
   if (err instanceof CustomError) {
     const { statusCode, errors, logging } = err;
-
     return res.status(statusCode).send({ errors });
   }
 
