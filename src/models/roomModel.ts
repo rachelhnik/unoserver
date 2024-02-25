@@ -7,8 +7,18 @@ const roomSchema: Schema<IRoom> = new mongoose.Schema(
     password: { type: String, required: true },
     socketId: { type: String },
     ownerId: { type: String },
+    cards: {
+      type: [{ color: String, cardNumber: Number, cardName: String }],
+    },
     playersIds: {
-      type: [{ id: Number, playerId: String, playerName: String }],
+      type: [
+        {
+          id: Number,
+          playerId: String,
+          playerName: String,
+          cards: [{ color: String, cardNumber: Number, cardName: String }],
+        },
+      ],
     },
     status: {
       type: String,
