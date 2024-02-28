@@ -56,7 +56,6 @@ export const editUserData = async (
     user = await User.findByIdAndUpdate(user?._id, { name: name });
   }
   if (user?.avatar !== image) {
-    //upload to server
   }
   if (user?.userId !== userId) {
     const isExistingId = await findUserByUserId(userId);

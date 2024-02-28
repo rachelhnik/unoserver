@@ -3,29 +3,34 @@ import dotenv from "dotenv";
 import connectDb from "./utils/db";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import { init } from "./utils/socket";
+import startSockets from "./controllers/socketController";
 
 dotenv.config();
 
 const port = process.env.PORT;
+console.log("port", port);
 const server = createServer(app);
 const io = new Server(server, {
+  path: `/api/v1/uno-game`,
   cors: {
-    origin: "http://localhost:3000", // Replace with your frontend URL
+    origin: "http://localhost:3000",
     methods: ["GET", "POST"],
     allowedHeaders: ["my-custom-header"],
     credentials: true,
   },
 });
-app.set("socketio", io);
 
-// io.on("connection", (socket: any) => {
-//   socket.on("id", (id: any) => {
-//     const targetSocket = io.sockets.sockets.get(id);
-//     if (targetSocket) {
-//       socket.emit("heelo");
-//     }
-//   });
-// });
+console.log("uo", io.path());
+//app.set("socketio", io);
+
+if (io) {
+  init(io);
+  console.log("hi");
+  io.on("connect", (socket) => {
+    startSockets(io, socket);
+  });
+}
 
 server.listen(8000, () => {
   console.log(`[server]: Server is running at http://localhost:${8000}`);
