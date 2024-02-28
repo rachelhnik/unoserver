@@ -54,35 +54,6 @@ export const createRoom = async (
   }
 };
 
-export const maintainRoomConnection = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const io = req.app.get("socketio");
-    io.on("connection", (socket: any) => {
-      socket.on(
-        "room-data",
-        async (data: { socketId: string; userId: string }) => {
-          const newUser = await User.findById({ _id: data.userId }).select({
-            name: true,
-          });
-          const targetSocket = io.sockets.sockets.get(data.socketId);
-          if (targetSocket) {
-            socket.emit("heelo");
-            socket.broadcast.emit("new-user", newUser?.name);
-          }
-        }
-      );
-    });
-
-    res.sendStatus(200);
-  } catch (error) {
-    console.log("error");
-  }
-};
-
 export const enterRoom = async (
   req: Request,
   res: Response,
@@ -92,7 +63,7 @@ export const enterRoom = async (
     const { password, userId, username } = req.body;
 
     const room = await Room.find({ password });
-    console.log("roomdata", room);
+
     if (room) {
       const newArr = [...room[0].playersIds].filter(
         (data) => data.playerId !== userId
@@ -126,11 +97,11 @@ export const getRoom = async (
   next: NextFunction
 ) => {
   try {
-    const { id } = req.params;
+    const { id, userId } = req.params;
     const room = await findRoom(id);
+
     res.status(200).send(room);
   } catch (error) {
-    console.log("err", error);
     next(error);
   }
 };
@@ -141,10 +112,7 @@ export const startGame = async (
   next: NextFunction
 ) => {
   try {
-    const { socketId, roomId } = req.body;
-    const io = req.app.get("socketio");
-
-    const targetSocket = io.sockets.sockets.get(socketId);
+    const { roomId } = req.body;
 
     const room = await findRoom(roomId);
 
@@ -159,16 +127,13 @@ export const startGame = async (
           cards: cards.splice(0, 7),
         };
       });
-      io.on("connection", (socket: any) => {
-        console.log("hllo*******************");
-        socket.emit("newData");
-      });
 
       const updatedRoom = await updateRoom(cards, roomId, data);
 
-      res.status(200).send(updateRoom);
+      res.status(200).send(updatedRoom);
     }
   } catch (error) {
+    console.log("eror", error);
     next(error);
   }
 };

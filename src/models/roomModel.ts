@@ -7,6 +7,9 @@ const roomSchema: Schema<IRoom> = new mongoose.Schema(
     password: { type: String, required: true },
     socketId: { type: String },
     ownerId: { type: String },
+    currentCard: {
+      type: { color: String, cardNumber: Number, cardName: String },
+    },
     cards: {
       type: [{ color: String, cardNumber: Number, cardName: String }],
     },

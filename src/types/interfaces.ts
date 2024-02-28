@@ -20,6 +20,7 @@ export interface IRoom {
   password: string;
   socketId: string;
   ownerId: string;
+  currentCard: Card;
   cards: Card[];
   playersIds: PlayerData[];
   status: Status;
@@ -41,4 +42,22 @@ enum Color {
   RED = "RED",
   YELLOW = "YELLOW",
   GREEN = "GREEN",
+}
+
+export enum RoomEvent {
+  NEWUSER = "new-user",
+}
+
+export enum GameEvent {
+  START = "start",
+  END = "end",
+  WIN = "win",
+  GAMEOVER = "gameover",
+  UNO = "uno",
+  DRAWTWO = "drawtwo",
+  DRAWFOUR = "drawfour",
+  CHANGECOLOR = "changecolor",
+  REVERSE = "reverse",
+  SKIP = "skip",
+  NORMAL = "normal",
 }

@@ -9,21 +9,27 @@ import startSockets from "./controllers/socketController";
 dotenv.config();
 
 const port = process.env.PORT;
+console.log("port", port);
 const server = createServer(app);
 const io = new Server(server, {
+  path: `/api/v1/uno-game`,
   cors: {
-    origin: "http://localhost:3000", // Replace with your frontend URL
+    origin: "http://localhost:3000",
     methods: ["GET", "POST"],
     allowedHeaders: ["my-custom-header"],
     credentials: true,
   },
 });
+
+console.log("uo", io.path());
 //app.set("socketio", io);
 
 if (io) {
   init(io);
   console.log("hi");
-  io.on("connect", startSockets);
+  io.on("connect", (socket) => {
+    startSockets(io, socket);
+  });
 }
 
 server.listen(8000, () => {
