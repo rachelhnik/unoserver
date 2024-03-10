@@ -1,10 +1,10 @@
 import app from "./app";
 import dotenv from "dotenv";
-import connectDb from "./utils/db";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { init } from "./utils/socket";
 import startSockets from "./controllers/socketController";
+import { connectDb, conn } from "./utils/db";
 
 dotenv.config();
 

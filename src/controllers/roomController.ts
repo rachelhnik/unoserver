@@ -31,23 +31,13 @@ export const createRoom = async (
       socketId: "",
       password: password,
       ownerId: userId,
-      playersIds: [{ id: 1, playerId: userId, playerName: username }],
+      currentPlayerId: userId,
+      players: [{ id: 1, playerId: userId, playerName: username }],
       status: "WAITING",
     });
     if (room) {
-      // socket.emit("room-created", {
-      //   roomId: room._id,
-      //   socketId: socket.id,
-      // });
-
       res.status(200).send(room);
     }
-    // });
-
-    // socket.on("disconnect", () => {
-    //   console.log("connection ended");
-    // });
-    // });
   } catch (error) {
     next(error);
     console.log("error");
@@ -65,7 +55,8 @@ export const enterRoom = async (
     const room = await Room.find({ password });
 
     if (room) {
-      const newArr = [...room[0].playersIds].filter(
+      console.log("orrom", room);
+      const newArr = [...room[0].players]?.filter(
         (data) => data.playerId !== userId
       );
       const updatedPlayersArr = [
@@ -80,7 +71,7 @@ export const enterRoom = async (
       const updatedRoom = await Room.findByIdAndUpdate(
         { _id: room[0]._id },
         {
-          playersIds: updatedPlayersArr,
+          players: updatedPlayersArr,
         },
         { new: true }
       );
@@ -118,13 +109,14 @@ export const startGame = async (
 
     if (room) {
       const cards = shuffle(generateCards()) as Card[];
-      const playerArr = room.playersIds;
+      const playerArr = room.players;
       const data = playerArr.map((player, index) => {
         return {
           id: index,
           playerId: player.playerId,
           playerName: player.playerName,
           cards: cards.splice(0, 7),
+          isPlayerTurn: room.ownerId === player.playerId ? true : false,
         };
       });
 

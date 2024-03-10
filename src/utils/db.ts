@@ -3,8 +3,7 @@ import { config } from "../config/config";
 
 const mongoUri = config.mongoUri;
 
-const connectDb = async () => {
-  console.log(">>>><<<<<");
+export const connectDb = async () => {
   try {
     await mongoose.connect(mongoUri).then((data: any) => {
       console.log(`Database is connected at ${data.connection.host}`);
@@ -14,4 +13,4 @@ const connectDb = async () => {
   }
 };
 
-export default connectDb;
+export const conn = mongoose.connection;
