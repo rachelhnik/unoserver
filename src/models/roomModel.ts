@@ -1,5 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import { IRoom, Status } from "../types/interfaces";
+import userModel from "./userModel";
 
 const roomSchema: Schema<IRoom> = new mongoose.Schema(
   {
@@ -10,16 +11,20 @@ const roomSchema: Schema<IRoom> = new mongoose.Schema(
     currentCard: {
       type: { color: String, cardNumber: Number, cardName: String },
     },
+    currentPlayerId: { type: String },
     cards: {
       type: [{ color: String, cardNumber: Number, cardName: String }],
     },
-    playersIds: {
+    clockwiseDirection: { type: Boolean, default: true },
+    cardsToDraw: { type: Number, default: 0 },
+    players: {
       type: [
         {
           id: Number,
           playerId: String,
           playerName: String,
           cards: [{ color: String, cardNumber: Number, cardName: String }],
+          isPlayerTurn: { type: Boolean, default: false },
         },
       ],
     },

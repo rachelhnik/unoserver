@@ -1,11 +1,11 @@
 import { ObjectId } from "mongoose";
 import BadRequestError from "../errors/BadRequestError";
 import Room from "../models/roomModel";
-import { Card } from "../types/interfaces";
+import { Card, GameEvent } from "../types/interfaces";
 
 export const findRoom = async (id: any) => {
   const room = await Room.findById({ _id: id });
-  console.log("room", room);
+
   if (room) {
     return room;
   } else {
@@ -15,10 +15,11 @@ export const findRoom = async (id: any) => {
 
 export const updateRoom = async (cards: Card[], id: string, data: any) => {
   const defaultCard = cards.splice(0, 1)[0];
+
   const room = await Room.findByIdAndUpdate(
     id,
     {
-      playersIds: data,
+      players: data,
       cards: cards,
       status: "PLAYING",
       currentCard: defaultCard,

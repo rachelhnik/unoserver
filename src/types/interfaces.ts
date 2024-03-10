@@ -8,10 +8,17 @@ export interface IUser {
   userId: string;
 }
 
-interface PlayerData {
+export interface PlayerData {
+  cards: {
+    _id: any;
+    color: string;
+    cardNumber: number;
+    cardName: string;
+  }[];
   id: number;
   playerId: String;
   playerName: String;
+  isPlayerTurn: boolean;
 }
 
 export interface IRoom {
@@ -21,9 +28,12 @@ export interface IRoom {
   socketId: string;
   ownerId: string;
   currentCard: Card;
+  currentPlayerId: string;
   cards: Card[];
-  playersIds: PlayerData[];
+  players: PlayerData[];
   status: Status;
+  clockwiseDirection: boolean;
+  cardsToDraw: number;
 }
 
 export enum Status {
@@ -54,6 +64,7 @@ export enum GameEvent {
   WIN = "win",
   GAMEOVER = "gameover",
   UNO = "uno",
+  DRAWCARD = "drawcard",
   DRAWTWO = "drawtwo",
   DRAWFOUR = "drawfour",
   CHANGECOLOR = "changecolor",
