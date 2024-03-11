@@ -22,7 +22,7 @@ export default async function startSockets(
 
   socket.on(
     GameEvent.CHANGECOLOR,
-    async ({ roomId, cardId, userId, droppableId, isStart }) => {
+    async ({ roomId, cardId, userId, droppableId, isStart, color }) => {
       handleRoomData({
         io,
         roomId,
@@ -31,6 +31,7 @@ export default async function startSockets(
         event: GameEvent.CHANGECOLOR,
         droppableId,
         isStart,
+        color,
       });
     }
   );
@@ -68,6 +69,7 @@ export default async function startSockets(
   socket.on(
     GameEvent.REVERSE,
     async ({ roomId, cardId, userId, droppableId, isStart }) => {
+      console.log(GameEvent.REVERSE, "<<<<<");
       handleRoomData({
         io,
         roomId,
@@ -98,6 +100,7 @@ export default async function startSockets(
   socket.on(
     GameEvent.NORMAL,
     async ({ roomId, cardId, userId, droppableId, isStart }) => {
+      console.log("event", GameEvent.NORMAL);
       handleRoomData({
         io,
         roomId,

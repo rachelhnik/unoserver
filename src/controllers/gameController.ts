@@ -26,6 +26,7 @@ export const handleRoomData = async ({
   event,
   droppableId,
   isStart,
+  color,
 }: {
   io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>;
   roomId: string;
@@ -34,15 +35,19 @@ export const handleRoomData = async ({
   event: string;
   droppableId: string;
   isStart: boolean;
+  color?: string;
 }) => {
   isStart
-    ? await handleStartGame({ roomId, cardId, userId, event: event })
+    ? await handleStartGame({ roomId, cardId, userId, event: event, color })
     : await handleGame({
         roomId,
         cardId,
         userId,
         event: event,
+        color,
       });
+
+  console.log("hlllo");
 
   io.to(roomId).emit("gameupdated", {
     cardId,
@@ -64,10 +69,11 @@ export const handleDrawCard = async ({
   userId: string;
   droppableId: string;
 }) => {
-  await handleCardDraw({ roomId, userId, droppableId });
+  const isCardUsable = await handleCardDraw({ roomId, userId, droppableId });
   io.to(roomId).emit(GameEvent.DRAWCARD, {
     userId,
     droppableId,
     roomId,
+    isCardUsable,
   });
 };
