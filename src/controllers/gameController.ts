@@ -37,7 +37,7 @@ export const handleRoomData = async ({
   isStart: boolean;
   color?: string;
 }) => {
-  isStart
+  const cardsToDraw = isStart
     ? await handleStartGame({ roomId, cardId, userId, event: event, color })
     : await handleGame({
         roomId,
@@ -55,6 +55,7 @@ export const handleRoomData = async ({
     droppableId,
     event,
     isStart,
+    cardsToDraw,
   });
 };
 

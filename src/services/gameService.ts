@@ -110,42 +110,48 @@ export const handleGame = async ({
 
   const nextPlayer = players.find((player) => player.id === nextIndex);
 
+  const hasCardInNextPlayer =
+    currentCard.cardNumber < 10 || currentCard.cardNumber === 1234
+      ? true
+      : nextPlayer?.cards.find(
+          (card) =>
+            card.cardNumber === 4444 ||
+            card.cardNumber === currentCard.cardNumber
+        );
+  console.log("hasCard", hasCardInNextPlayer);
+
   const cardsToDraw = checkDrawCards({
-    currentCard,
+    currentCard: currentCard,
     cardsToDraw: room.cardsToDraw,
   });
 
-  const newCardsArr =
-    event === GameEvent.DRAWFOUR
-      ? cardsArr.splice(0, cardsToDraw)
-      : event === GameEvent.DRAWTWO
-      ? cardsArr.splice(0, cardsToDraw)
-      : [];
+  console.log("cardsToDraw", cardsToDraw);
+
+  const newCardsArr = hasCardInNextPlayer
+    ? []
+    : cardsArr.splice(0, cardsToDraw);
+
+  nextIndex = hasCardInNextPlayer
+    ? nextIndex
+    : checkNextIndex(GameEvent.SKIP, players, currentPlayer, room);
 
   const newPlayersArr = players?.map((player) => {
-    const cards =
-      player.id === nextPlayer?.id
-        ? ([...(player?.cards || [])] as Card[])
-        : [];
-
     if (player.playerId === userId) {
       return {
         id: player.id,
         playerId: player.playerId,
         playerName: player.playerName,
         cards: player.cards.filter((card) => card._id.toString() !== cardId),
-        isPlayerTurn: player.id === nextPlayer?.id ? true : false,
+        isPlayerTurn: player.id === nextIndex ? true : false,
       };
     } else {
+      const cards = [...(player?.cards || [])] as Card[];
       return {
         id: player.id,
         playerId: player.playerId,
         playerName: player.playerName,
-        cards:
-          player.id === nextPlayer?.id
-            ? [...cards, ...newCardsArr]
-            : player.cards,
-        isPlayerTurn: player.id === nextPlayer?.id ? true : false,
+        cards: [...cards, ...newCardsArr],
+        isPlayerTurn: player.id === nextIndex ? true : false,
       };
     }
   });
@@ -164,7 +170,7 @@ export const handleGame = async ({
           : currentCard,
         cards: cardsArr,
         currentPlayerId: nextPlayer?.playerId,
-        cardsToDraw: cardsToDraw,
+        cardsToDraw: hasCardInNextPlayer ? cardsToDraw : 0,
         direction:
           event === GameEvent.REVERSE
             ? !room?.clockwiseDirection
@@ -172,6 +178,7 @@ export const handleGame = async ({
       },
       { new: true }
     );
+    return event === GameEvent.DRAW ? 0 : cardsToDraw;
   }
 };
 
@@ -257,11 +264,7 @@ const checkNextIndex = (
   currentPlayer: PlayerData,
   room: IRoom
 ) => {
-  if (
-    event === GameEvent.SKIP ||
-    event === GameEvent.DRAWFOUR ||
-    event === GameEvent.DRAWTWO
-  ) {
+  if (event === GameEvent.SKIP) {
     const skipDirection = room.clockwiseDirection ? 1 : -1;
     const nextIndex =
       (currentPlayer.id + 2 * skipDirection + players.length) % players.length;

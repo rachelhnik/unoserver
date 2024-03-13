@@ -71,4 +71,5 @@ export enum GameEvent {
   REVERSE = "reverse",
   SKIP = "skip",
   NORMAL = "normal",
+  DRAW = "draw",
 }

@@ -4,7 +4,6 @@ import { handleDrawCard, handleRoomData, onConnect } from "./gameController";
 import { Server, Socket } from "socket.io";
 import { GameEvent } from "../types/interfaces";
 import Room from "../models/roomModel";
-import { handleGame } from "../services/gameService";
 
 export default async function startSockets(
   io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>,
@@ -107,6 +106,22 @@ export default async function startSockets(
         cardId,
         userId,
         event: GameEvent.NORMAL,
+        droppableId,
+        isStart,
+      });
+    }
+  );
+
+  socket.on(
+    GameEvent.DRAW,
+    async ({ roomId, cardId, userId, droppableId, isStart }) => {
+      console.log("drawcard", GameEvent.DRAW);
+      handleRoomData({
+        io,
+        roomId,
+        cardId,
+        userId,
+        event: GameEvent.DRAWFOUR,
         droppableId,
         isStart,
       });
