@@ -6,80 +6,42 @@ import {
   IRoom,
   PlayerData,
   RoomEvent,
+  Status,
 } from "../types/interfaces";
+import { checkDrawCards, checkNextIndex } from "../utils/cards";
 
-export const handleStartGame = async ({
+interface RetrunProps {
+  room: IRoom;
+  players: PlayerData[];
+  cardsArr: Card[];
+  currentPlayer: PlayerData;
+  nextIndex: number;
+  nextPlayer: PlayerData;
+}
+
+const getRequiredData = async ({
   roomId,
-  cardId,
-  userId,
   event,
-  color,
+  userId,
+  isStart,
 }: {
   roomId: string;
-  cardId: string;
-  userId: string;
   event: string;
-  color?: string;
-}) => {
+  userId: string;
+  isStart: boolean;
+}): Promise<RetrunProps> => {
   const room = (await Room.findById({ _id: roomId })) as IRoom;
   const players = room?.players as PlayerData[];
   const cardsArr = [...room.cards];
   const currentPlayer = players?.find(
     (player) => player.playerId === userId
   ) as PlayerData;
-  let nextIndex = checkNextIndex(event, players, currentPlayer, room);
+  let nextIndex = checkNextIndex(event, players, currentPlayer, room, isStart);
 
-  const nextPlayer = players.find((player) => player.id === nextIndex);
-
-  const cardsToDraw = checkDrawCards({
-    currentCard: room.currentCard,
-    cardsToDraw: room.cardsToDraw,
-  });
-
-  const newCardsArr =
-    event === GameEvent.DRAWFOUR
-      ? cardsArr.splice(0, cardsToDraw)
-      : event === GameEvent.DRAWTWO
-      ? cardsArr.splice(0, cardsToDraw)
-      : [];
-
-  const newPlayersArr = players?.map((player) => {
-    if (player.playerId === userId) {
-      return {
-        id: player.id,
-        playerId: player.playerId,
-        playerName: player.playerName,
-        cards: [...player.cards, ...newCardsArr],
-        isPlayerTurn: false,
-      };
-    } else {
-      return {
-        id: player.id,
-        playerId: player.playerId,
-        playerName: player.playerName,
-        cards: player.cards,
-        isPlayerTurn: player.id === nextPlayer?.id ? true : false,
-      };
-    }
-  });
-
-  if (newPlayersArr) {
-    const data = await Room.findByIdAndUpdate(
-      { _id: roomId },
-      {
-        players: newPlayersArr,
-        currentCard: room.currentCard,
-        currentPlayerId: nextPlayer?.playerId,
-        cards: cardsArr,
-        cardsToDraw: 0,
-        direction:
-          event === GameEvent.REVERSE
-            ? !room?.clockwiseDirection
-            : room?.clockwiseDirection,
-      },
-      { new: true }
-    );
-  }
+  const nextPlayer = players.find(
+    (player) => player.id === nextIndex
+  ) as PlayerData;
+  return { room, players, cardsArr, currentPlayer, nextIndex, nextPlayer };
 };
 
 export const handleGame = async ({
@@ -95,54 +57,48 @@ export const handleGame = async ({
   event: string;
   color?: string;
 }) => {
-  const room = (await Room.findById({ _id: roomId })) as IRoom;
-  const players = room?.players as PlayerData[];
-  const cardsArr = [...room.cards];
-  const currentPlayer = players?.find(
-    (player) => player.playerId === userId
-  ) as PlayerData;
+  const { room, players, cardsArr, currentPlayer, nextIndex, nextPlayer } =
+    await getRequiredData({ roomId, event, userId, isStart: false });
 
   const currentCard = currentPlayer?.cards.find(
     (card) => card._id.toString() === cardId
   ) as Card;
 
-  let nextIndex = checkNextIndex(event, players, currentPlayer, room);
-
-  const nextPlayer = players.find((player) => player.id === nextIndex);
-
   const hasCardInNextPlayer =
-    currentCard.cardNumber < 10 || currentCard.cardNumber === 1234
+    currentCard?.cardNumber < 10 || currentCard?.cardNumber === 1234
       ? true
       : nextPlayer?.cards.find(
           (card) =>
             card.cardNumber === 4444 ||
-            card.cardNumber === currentCard.cardNumber
+            card.cardNumber === currentCard?.cardNumber
         );
-  console.log("hasCard", hasCardInNextPlayer);
 
   const cardsToDraw = checkDrawCards({
     currentCard: currentCard,
     cardsToDraw: room.cardsToDraw,
   });
 
-  console.log("cardsToDraw", cardsToDraw);
-
   const newCardsArr = hasCardInNextPlayer
     ? []
     : cardsArr.splice(0, cardsToDraw);
 
-  nextIndex = hasCardInNextPlayer
+  const finalNextIndex = hasCardInNextPlayer
     ? nextIndex
-    : checkNextIndex(GameEvent.SKIP, players, currentPlayer, room);
+    : checkNextIndex(GameEvent.SKIP, players, currentPlayer, room, false);
+
+  let mark = 0;
 
   const newPlayersArr = players?.map((player) => {
     if (player.playerId === userId) {
+      mark += Number(player?.mark) + Number(currentCard.mark);
+
       return {
         id: player.id,
         playerId: player.playerId,
         playerName: player.playerName,
         cards: player.cards.filter((card) => card._id.toString() !== cardId),
-        isPlayerTurn: player.id === nextIndex ? true : false,
+        isPlayerTurn: player.id === finalNextIndex ? true : false,
+        mark: mark,
       };
     } else {
       const cards = [...(player?.cards || [])] as Card[];
@@ -150,14 +106,17 @@ export const handleGame = async ({
         id: player.id,
         playerId: player.playerId,
         playerName: player.playerName,
-        cards: [...cards, ...newCardsArr],
-        isPlayerTurn: player.id === nextIndex ? true : false,
+        cards:
+          player.id === nextPlayer?.id
+            ? [...cards, ...newCardsArr]
+            : player.cards,
+        isPlayerTurn: player.id === finalNextIndex ? true : false,
+        mark: player.mark,
       };
     }
   });
-
   if (newPlayersArr) {
-    const data = await Room.findByIdAndUpdate(
+    await Room.findByIdAndUpdate(
       { _id: roomId },
       {
         players: newPlayersArr,
@@ -171,14 +130,15 @@ export const handleGame = async ({
         cards: cardsArr,
         currentPlayerId: nextPlayer?.playerId,
         cardsToDraw: hasCardInNextPlayer ? cardsToDraw : 0,
-        direction:
+
+        clockwiseDirection:
           event === GameEvent.REVERSE
             ? !room?.clockwiseDirection
             : room?.clockwiseDirection,
       },
       { new: true }
     );
-    return event === GameEvent.DRAW ? 0 : cardsToDraw;
+    return mark;
   }
 };
 
@@ -186,15 +146,17 @@ export const handleCardDraw = async ({
   roomId,
   userId,
   droppableId,
+  uno,
 }: {
   roomId: string;
   userId: string;
   droppableId: string;
+  uno: boolean;
 }) => {
   const room = (await Room.findById({ _id: roomId })) as IRoom;
   const players = room?.players as PlayerData[];
   const cardsArr = [...room.cards];
-  const drawCard = cardsArr.shift() as Card;
+  const drawCard = uno ? cardsArr.splice(0, 2) : cardsArr.splice(0, 1);
 
   const currentPlayer = players?.find(
     (player) => player.playerId === userId
@@ -204,20 +166,22 @@ export const handleCardDraw = async ({
     GameEvent.DRAWCARD,
     players,
     currentPlayer,
-    room
+    room,
+    false
   );
 
   const nextPlayer = players.find((player) => player.id === nextIndex);
 
-  const isCardUsable =
-    drawCard.color === room.currentCard.color ||
-    drawCard.cardNumber === room.currentCard.cardNumber ||
-    drawCard.cardNumber === 1234 ||
-    drawCard.cardNumber === 4444;
+  const isCardUsable = uno
+    ? false
+    : drawCard[0].color === room.currentCard.color ||
+      drawCard[0].cardNumber === room.currentCard.cardNumber ||
+      drawCard[0].cardNumber === 1234 ||
+      drawCard[0].cardNumber === 4444;
 
   const newPlayersArr = players?.map((player) => {
-    const cards = [...(player?.cards || [])] as Card[];
-    cards.push(drawCard);
+    const cards = [...player?.cards, ...drawCard] as Card[];
+    // console.log("cards", cards.length);
 
     if (player.playerId === userId) {
       return {
@@ -226,6 +190,7 @@ export const handleCardDraw = async ({
         playerName: player.playerName,
         cards: cards,
         isPlayerTurn: isCardUsable ? true : false,
+        mark: player.mark,
       };
     } else {
       return {
@@ -238,11 +203,12 @@ export const handleCardDraw = async ({
           : player.id === nextPlayer?.id
           ? true
           : false,
+        mark: player.mark,
       };
     }
   });
   if (newPlayersArr) {
-    const data = await Room.findByIdAndUpdate(
+    await Room.findByIdAndUpdate(
       { _id: roomId },
       {
         players: newPlayersArr,
@@ -258,43 +224,47 @@ export const handleCardDraw = async ({
   return isCardUsable;
 };
 
-const checkNextIndex = (
-  event: string,
-  players: PlayerData[],
-  currentPlayer: PlayerData,
-  room: IRoom
-) => {
-  if (event === GameEvent.SKIP) {
-    const skipDirection = room.clockwiseDirection ? 1 : -1;
-    const nextIndex =
-      (currentPlayer.id + 2 * skipDirection + players.length) % players.length;
-    return nextIndex;
-  }
-
-  if (event === GameEvent.REVERSE) {
-    const reverseDirection = room?.clockwiseDirection ? -1 : 1;
-    const nextIndex =
-      (currentPlayer.id + 2 * reverseDirection + players.length) %
-      players.length;
-    return nextIndex;
-  }
-
-  const direction = room?.clockwiseDirection ? 1 : -1;
-  const nextIndex =
-    (currentPlayer.id + direction + players.length) % players.length;
-  return nextIndex;
-};
-
-const checkDrawCards = ({
-  currentCard,
-  cardsToDraw,
+export const handleEndGame = async ({
+  roomId,
+  cardId,
+  userId,
+  droppableId,
 }: {
-  currentCard: Card;
-  cardsToDraw: number;
+  roomId: string;
+  cardId: string;
+  userId: string;
+  droppableId: string;
 }) => {
-  return currentCard?.cardNumber === 22
-    ? cardsToDraw + 2
-    : currentCard?.cardNumber === 4444
-    ? cardsToDraw + 4
-    : cardsToDraw;
+  const room = (await Room.findById({ _id: roomId })) as IRoom;
+
+  const players = room?.players as PlayerData[];
+
+  const finalPlayersArr = players?.map((player) => {
+    if (player.playerId === userId) {
+      return {
+        id: player.id,
+        playerId: player.playerId,
+        playerName: player.playerName,
+        cards: [],
+        isPlayerTurn: true,
+      };
+    } else {
+      return player;
+    }
+  });
+  if (finalPlayersArr) {
+    await Room.findByIdAndUpdate(
+      { _id: roomId },
+      {
+        players: finalPlayersArr,
+        cards: room.cards,
+        currentCard: room.currentCard,
+        currentPlayerId: room.currentPlayerId,
+        cardsToDraw: 0,
+        status: Status.ENDED,
+        direction: room.clockwiseDirection,
+      },
+      { new: true }
+    );
+  }
 };

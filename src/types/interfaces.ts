@@ -14,11 +14,13 @@ export interface PlayerData {
     color: string;
     cardNumber: number;
     cardName: string;
+    mark: number;
   }[];
   id: number;
   playerId: String;
   playerName: String;
   isPlayerTurn: boolean;
+  mark: number;
 }
 
 export interface IRoom {
@@ -29,10 +31,12 @@ export interface IRoom {
   ownerId: string;
   currentCard: Card;
   currentPlayerId: string;
+  winnerId: string;
   cards: Card[];
   players: PlayerData[];
   status: Status;
   clockwiseDirection: boolean;
+  firstTurn: boolean;
   cardsToDraw: number;
 }
 
@@ -45,6 +49,7 @@ export interface Card {
   color: Color;
   cardNumber: number;
   cardName: string;
+  mark: number;
 }
 
 enum Color {

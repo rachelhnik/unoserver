@@ -9,7 +9,7 @@ import { connectDb, conn } from "./utils/db";
 dotenv.config();
 
 const port = process.env.PORT;
-console.log("port", port);
+
 const server = createServer(app);
 const io = new Server(server, {
   path: `/api/v1/uno-game`,
@@ -20,13 +20,10 @@ const io = new Server(server, {
     credentials: true,
   },
 });
-
-console.log("uo", io.path());
 //app.set("socketio", io);
 
 if (io) {
   init(io);
-  console.log("hi");
   io.on("connect", (socket) => {
     startSockets(io, socket);
   });

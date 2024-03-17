@@ -1,4 +1,5 @@
 import { uuid } from "uuidv4";
+import { Card, GameEvent, IRoom, PlayerData } from "../types/interfaces";
 
 export const generateCards = () => {
   const numArr = [0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9];
@@ -54,6 +55,7 @@ const makeNumberCard = (num: number, color: string, char: string) => {
     color: color,
     cardNumber: num,
     cardName: `${char}_${num}.png`,
+    mark: num,
   };
 };
 
@@ -71,6 +73,7 @@ const makeActionCard = (num: number, color: string, char: string) => {
         : num === -1
         ? `${char}_reverse.png`
         : `${char}_skip.png`,
+    mark: 20,
   };
 };
 
@@ -79,6 +82,7 @@ const makeWildCard = (num: number, color: string) => {
     color: color,
     cardNumber: num,
     cardName: num === 4444 ? `any_draw_4.png` : `any_wild.png`,
+    mark: 50,
   };
 };
 
@@ -88,4 +92,49 @@ export const shuffle = (array: any[]) => {
     [array[i], array[j]] = [array[j], array[i]];
   }
   return array;
+};
+
+export const checkNextIndex = (
+  event: string,
+  players: PlayerData[],
+  currentPlayer: PlayerData,
+  room: IRoom,
+  isStart: boolean
+) => {
+  if (event === GameEvent.SKIP) {
+    const skipDirection = room.clockwiseDirection ? 1 : -1;
+    const nextIndex =
+      (currentPlayer.id + 2 * skipDirection + players.length) % players.length;
+    return nextIndex;
+  }
+
+  if (event === GameEvent.REVERSE) {
+    const reverseDirection = room?.clockwiseDirection ? -1 : 1;
+    const nextIndex =
+      players.length === 2
+        ? (currentPlayer.id + 2 * reverseDirection + players.length) %
+          players.length
+        : (currentPlayer.id + 1 * reverseDirection + players.length) %
+          players.length;
+    return nextIndex;
+  }
+
+  const direction = room?.clockwiseDirection ? 1 : -1;
+  const nextIndex =
+    (currentPlayer.id + direction + players.length) % players.length;
+  return nextIndex;
+};
+
+export const checkDrawCards = ({
+  currentCard,
+  cardsToDraw,
+}: {
+  currentCard: Card;
+  cardsToDraw: number;
+}) => {
+  return currentCard?.cardNumber === 22
+    ? cardsToDraw + 2
+    : currentCard?.cardNumber === 4444
+    ? cardsToDraw + 4
+    : cardsToDraw;
 };

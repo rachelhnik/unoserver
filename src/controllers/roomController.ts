@@ -4,7 +4,7 @@ import BadRequestError from "../errors/BadRequestError";
 import { findRoom, updateRoom } from "../services/roomService";
 import User from "../models/userModel";
 import { generateCards, shuffle } from "../utils/cards";
-import { Card } from "../types/interfaces";
+import { Card, IRoom } from "../types/interfaces";
 
 export const createRoom = async (
   req: Request,
@@ -21,10 +21,12 @@ export const createRoom = async (
       password: password,
     });
     if (alreadyExistingPassword) {
-      throw new BadRequestError({
-        code: 409,
-        message: "Please use different password",
-      });
+      return next(
+        new BadRequestError({
+          code: 409,
+          message: "Please use different password",
+        })
+      );
     }
     const room = await Room.create({
       name: name,
@@ -40,7 +42,6 @@ export const createRoom = async (
     }
   } catch (error) {
     next(error);
-    console.log("error");
   }
 };
 
@@ -54,8 +55,7 @@ export const enterRoom = async (
 
     const room = await Room.find({ password });
 
-    if (room) {
-      console.log("orrom", room);
+    if (room && room[0].status === "WAITING") {
       const newArr = [...room[0].players]?.filter(
         (data) => data.playerId !== userId
       );
@@ -76,9 +76,13 @@ export const enterRoom = async (
         { new: true }
       );
       res.status(200).send(updatedRoom);
+    } else {
+      return next(
+        new BadRequestError({ code: 400, message: "Find another room." })
+      );
     }
   } catch (error) {
-    console.log("error", error);
+    next(error);
   }
 };
 

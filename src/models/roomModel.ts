@@ -12,10 +12,14 @@ const roomSchema: Schema<IRoom> = new mongoose.Schema(
       type: { color: String, cardNumber: Number, cardName: String },
     },
     currentPlayerId: { type: String },
+    winnerId: { type: String },
     cards: {
-      type: [{ color: String, cardNumber: Number, cardName: String }],
+      type: [
+        { color: String, cardNumber: Number, cardName: String, mark: Number },
+      ],
     },
     clockwiseDirection: { type: Boolean, default: true },
+    firstTurn: { type: Boolean, default: true },
     cardsToDraw: { type: Number, default: 0 },
     players: {
       type: [
@@ -23,8 +27,16 @@ const roomSchema: Schema<IRoom> = new mongoose.Schema(
           id: Number,
           playerId: String,
           playerName: String,
-          cards: [{ color: String, cardNumber: Number, cardName: String }],
+          cards: [
+            {
+              color: String,
+              cardNumber: Number,
+              cardName: String,
+              mark: Number,
+            },
+          ],
           isPlayerTurn: { type: Boolean, default: false },
+          mark: { type: Number, default: 0 },
         },
       ],
     },
