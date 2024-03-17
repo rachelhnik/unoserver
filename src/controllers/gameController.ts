@@ -3,11 +3,7 @@ import { IO } from "../utils/socket";
 import { DefaultEventsMap } from "socket.io/dist/typed-events";
 import { GameEvent, RoomEvent } from "../types/interfaces";
 import User from "../models/userModel";
-import {
-  handleCardDraw,
-  handleGame,
-  handleStartGame,
-} from "../services/gameService";
+import { handleCardDraw, handleGame } from "../services/gameService";
 
 export const onConnect = async (
   io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>,
@@ -25,8 +21,8 @@ export const handleRoomData = async ({
   userId,
   event,
   droppableId,
-  isStart,
   color,
+  isStart,
 }: {
   io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>;
   roomId: string;
@@ -34,29 +30,25 @@ export const handleRoomData = async ({
   userId: string;
   event: string;
   droppableId: string;
-  isStart: boolean;
   color?: string;
+  isStart?: boolean;
 }) => {
-  const cardsToDraw = isStart
-    ? await handleStartGame({ roomId, cardId, userId, event: event, color })
-    : await handleGame({
-        roomId,
-        cardId,
-        userId,
-        event: event,
-        color,
-      });
-
-  console.log("hlllo");
-
-  io.to(roomId).emit("gameupdated", {
+  const currentMark = (await handleGame({
+    roomId,
     cardId,
     userId,
-    droppableId,
-    event,
-    isStart,
-    cardsToDraw,
-  });
+    event: event,
+    color,
+  })) as number;
+
+  currentMark >= 500
+    ? io.to(roomId).emit(GameEvent.END, { userId })
+    : io.to(roomId).emit("gameupdated", {
+        cardId,
+        userId,
+        droppableId,
+        event,
+      });
 };
 
 export const handleDrawCard = async ({
@@ -64,13 +56,20 @@ export const handleDrawCard = async ({
   roomId,
   userId,
   droppableId,
+  uno,
 }: {
   io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>;
   roomId: string;
   userId: string;
   droppableId: string;
+  uno: boolean;
 }) => {
-  const isCardUsable = await handleCardDraw({ roomId, userId, droppableId });
+  const isCardUsable = await handleCardDraw({
+    roomId,
+    userId,
+    droppableId,
+    uno,
+  });
   io.to(roomId).emit(GameEvent.DRAWCARD, {
     userId,
     droppableId,

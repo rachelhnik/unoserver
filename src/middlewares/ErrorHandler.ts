@@ -8,7 +8,8 @@ const ErrorHandler = async (
   next: NextFunction
 ) => {
   if (err instanceof CustomError) {
-    const { statusCode, errors, logging } = err;
+    const { statusCode, errors } = err;
+    console.log("error", errors);
     return res.status(statusCode).send({ errors });
   }
 
