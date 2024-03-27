@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import cors from "cors";
 import "express-async-errors";
 import dotenv from "dotenv";
@@ -16,6 +16,10 @@ app.use(
     credentials: true,
   })
 );
+
+app.get("/", (req: Request, res: Response) => {
+  res.status(200).send({ message: "HELLO" });
+});
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/room", roomRouter);
