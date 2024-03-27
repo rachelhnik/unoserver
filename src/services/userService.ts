@@ -2,6 +2,9 @@ import { randomUUID } from "crypto";
 import User from "../models/userModel";
 import { IUser } from "../types/interfaces";
 import BadRequestError from "../errors/BadRequestError";
+import { isTypeId, isUUID } from "common-id-validator";
+import { isObjectId } from "common-id-validator";
+import { ObjectId } from "bson";
 
 export const generateUserId = (name: string) => {
   return name.substring(0, 2) + randomUUID().substring(0, 6);
@@ -37,6 +40,7 @@ export const addUser = async (
   image: string
 ): Promise<IUser> => {
   let userId = generateUserId(name);
+
   const isUserIdAlreadyExisted = await findUserByUserId(userId);
   if (isUserIdAlreadyExisted) {
     userId = generateUserId(name);
@@ -50,7 +54,7 @@ export const editUserData = async (
   image: string,
   userId: string
 ) => {
-  let user = await findUserByEmail(email);
+  let user = (await findUserByEmail(email)) as any;
 
   if (user?.name !== name) {
     user = await User.findByIdAndUpdate(user?._id, { name: name });
