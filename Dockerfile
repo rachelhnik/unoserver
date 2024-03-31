@@ -6,13 +6,15 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y nodejs \
-    npm   
+RUN sudo chown -R ubuntu:ubuntu /var/www/uno
+RUN sudo chmod -R 755 /var/www/uno
 
 RUN npm install
 
 COPY . .
+
+RUN sudo chown -R jenkins:jenkins /var/www/uno
+
 
 EXPOSE 8000
 
