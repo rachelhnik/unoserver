@@ -30,6 +30,6 @@ if (io) {
 }
 
 server.listen(8000, () => {
-  console.log(`[server]: Server is running at http://localhost:${8000}`);
+  console.log(`[server]: Server is running at http://localhost:${port}`);
   connectDb();
 });
