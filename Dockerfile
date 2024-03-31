@@ -1,4 +1,6 @@
-FROM node
+FROM alpine:3.19
+
+ENV NODE_VERSION 20.12.0
 
 COPY package*.json ./
 
