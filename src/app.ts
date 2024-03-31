@@ -18,7 +18,7 @@ app.use(
 );
 
 app.get("/", (req: Request, res: Response) => {
-  res.status(200).send({ message: "HELLO WORLD,My friends" });
+  res.status(200).send({ message: "HELLO WORLD,My friends." });
 });
 
 app.use("/api/v1/users", userRouter);
